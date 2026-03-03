@@ -1,0 +1,17 @@
+{
+  "name": "derive",
+  "version": "0.1.0",
+  "description": "A symbolic math engine that shows its work",
+  "type": "module",
+  "main": "src/cli.ts",
+  "bin": {
+    "derive": "src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun src/cli.ts",
+    "repl": "bun src/cli.ts repl",
+    "test": "bun test"
+  },
+  "keywords": ["symbolic-math", "calculus", "differentiation", "algebra", "CAS"],
+  "license": "MIT"
+}
