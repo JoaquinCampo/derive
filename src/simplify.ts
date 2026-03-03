@@ -219,6 +219,12 @@ function simplifyNeg(e: Expr & { tag: 'neg' }): Expr {
   // neg(sub(a, b)) → sub(b, a)
   if (inner.tag === 'sub') return sub(inner.right, inner.left)
 
+  // neg(mul(a, b)) — push negation into a numeric factor
+  if (inner.tag === 'mul') {
+    if (inner.left.tag === 'num') return mul(num(-inner.left.value), inner.right)
+    if (inner.right.tag === 'num') return mul(num(-inner.right.value), inner.left)
+  }
+
   return e
 }
 
