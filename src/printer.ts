@@ -81,7 +81,7 @@ function precOf(e: Expr): Prec {
   }
 }
 
-function fmt(e: Expr, parentPrec: Prec, isRight: boolean, c: Colorizer): string {
+function fmt(e: Expr, parentPrec: Prec, isRight: boolean, c: Colorizer, parentTag?: string): string {
   const s = fmtInner(e, c)
   const myPrec = precOf(e)
 
@@ -90,10 +90,12 @@ function fmt(e: Expr, parentPrec: Prec, isRight: boolean, c: Colorizer): string 
   if (myPrec < parentPrec) {
     needsParens = true
   } else if (myPrec === parentPrec && isRight) {
-    // Right-associativity matters for sub and div:
-    // a - (b - c) needs parens, a - (b + c) also needs parens
-    if (e.tag === 'add' || e.tag === 'sub') needsParens = true
-    if (e.tag === 'mul' || e.tag === 'div') needsParens = true
+    // Only non-associative operators need parens on the right:
+    // a - (b + c) needs parens, a - (b - c) needs parens
+    // a / (b * c) needs parens, a / (b / c) needs parens
+    // But a * (b * c) and a + (b + c) do NOT need parens
+    if (parentTag === 'sub') needsParens = true
+    if (parentTag === 'div') needsParens = true
   }
 
   return wrap(s, needsParens, c)
@@ -110,21 +112,21 @@ function fmtInner(e: Expr, c: Colorizer): string {
       return c.var_(e.name)
 
     case 'add':
-      return `${fmt(e.left, Prec.Add, false, c)} ${c.op('+')} ${fmt(e.right, Prec.Add, true, c)}`
+      return `${fmt(e.left, Prec.Add, false, c, 'add')} ${c.op('+')} ${fmt(e.right, Prec.Add, true, c, 'add')}`
 
     case 'sub':
-      return `${fmt(e.left, Prec.Add, false, c)} ${c.op('-')} ${fmt(e.right, Prec.Add, true, c)}`
+      return `${fmt(e.left, Prec.Add, false, c, 'sub')} ${c.op('-')} ${fmt(e.right, Prec.Add, true, c, 'sub')}`
 
     case 'mul': {
       if (isImplicitMul(e.left, e.right)) {
         // No operator, no space: 2x, xy
-        return `${fmt(e.left, Prec.Mul, false, c)}${fmt(e.right, Prec.Mul, true, c)}`
+        return `${fmt(e.left, Prec.Mul, false, c, 'mul')}${fmt(e.right, Prec.Mul, true, c, 'mul')}`
       }
-      return `${fmt(e.left, Prec.Mul, false, c)} ${c.op('·')} ${fmt(e.right, Prec.Mul, true, c)}`
+      return `${fmt(e.left, Prec.Mul, false, c, 'mul')} ${c.op('·')} ${fmt(e.right, Prec.Mul, true, c, 'mul')}`
     }
 
     case 'div':
-      return `${fmt(e.left, Prec.Mul, false, c)} ${c.op('/')} ${fmt(e.right, Prec.Mul, true, c)}`
+      return `${fmt(e.left, Prec.Mul, false, c, 'div')} ${c.op('/')} ${fmt(e.right, Prec.Mul, true, c, 'div')}`
 
     case 'pow': {
       const base = fmt(e.base, Prec.Pow, false, c)

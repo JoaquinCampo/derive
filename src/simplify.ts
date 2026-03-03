@@ -145,6 +145,14 @@ function simplifyMul(e: Expr & { tag: 'mul' }): Expr {
     return mul(num(right.value * left.left.value), left.right)
   }
 
+  // x * (1/x) → 1, x * (a/x) → a
+  if (right.tag === 'div' && equal(left, right.right)) return right.left
+  // (1/x) * x → 1, (a/x) * x → a
+  if (left.tag === 'div' && equal(right, left.right)) return left.left
+
+  // x * x → x²
+  if (equal(left, right)) return { tag: 'pow', base: left, exp: num(2) }
+
   return e
 }
 
